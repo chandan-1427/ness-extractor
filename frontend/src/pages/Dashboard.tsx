@@ -163,25 +163,51 @@ const Dashboard = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* --- TERMINAL INGEST --- */}
-          <Card className="bg-[#181818] border-white/5 text-white h-fit shadow-2xl">
-            <CardHeader>
-              <CardTitle className="text-md flex items-center gap-2 font-mono">
-                <Terminal size={16} className="text-green-500"/> STDIN_RAW
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <textarea 
-                value={rawText}
-                onChange={(e) => setRawText(e.target.value)}
-                className="w-full h-48 bg-[#0F0F0F] border border-white/5 rounded p-3 text-xs font-mono text-green-500/80 focus:border-white/20 outline-none resize-none placeholder:text-zinc-800"
-                placeholder="PASTE RAW STATEMENT FRAGMENT HERE..."
-              />
-              <Button onClick={handleExtraction} disabled={isExtracting} className="w-full bg-white text-black hover:bg-zinc-200 font-bold transition-all active:scale-[0.98]">
-                {isExtracting ? <Loader2 className="animate-spin mr-2"/> : <Zap className="mr-2" size={16}/>}
-                PARSE_STRING
-              </Button>
-            </CardContent>
-          </Card>
+{/* --- TERMINAL INGEST --- */}
+<Card className="bg-[#181818] border-white/5 text-white h-fit shadow-2xl">
+  <CardHeader>
+    <CardTitle className="text-md flex items-center gap-2 font-mono">
+      <Terminal size={16} className="text-green-500" /> STDIN_RAW
+    </CardTitle>
+  </CardHeader>
+
+  <CardContent className="space-y-4">
+    <textarea
+      value={rawText}
+      onChange={(e) => setRawText(e.target.value)}
+      className="w-full h-48 bg-[#0F0F0F] border border-white/5 rounded p-3 text-xs font-mono text-green-500/80 focus:border-white/20 outline-none resize-none placeholder:text-zinc-800"
+      placeholder="PASTE RAW STATEMENT FRAGMENT HERE..."
+    />
+
+    {/* ✅ SAMPLE TRANSACTIONS */}
+    <div className="rounded border border-white/5 bg-[#101010] p-3 space-y-2">
+      <p className="text-[11px] font-mono text-zinc-400">
+        SAMPLE_INPUT (click to copy)
+      </p>
+
+      <div className="bg-black/40 border border-white/5 rounded p-2">
+        <pre className="text-[11px] leading-relaxed font-mono text-green-400/80 whitespace-pre-wrap">
+{`Your a/c XXXXX1234 is debited with INR 1,250.00 on 12-09-2025. Available balance: INR 23,540.50`}
+        </pre>
+      </div>
+
+    </div>
+
+    <Button
+      onClick={handleExtraction}
+      disabled={isExtracting}
+      className="w-full bg-white text-black hover:bg-zinc-200 font-bold transition-all active:scale-[0.98]"
+    >
+      {isExtracting ? (
+        <Loader2 className="animate-spin mr-2" />
+      ) : (
+        <Zap className="mr-2" size={16} />
+      )}
+      PARSE_STRING
+    </Button>
+  </CardContent>
+</Card>
+
 
           {/* --- SECURE LEDGER TABLE --- */}
           <Card className="lg:col-span-2 bg-[#181818] border-white/5 text-white shadow-2xl overflow-hidden">
