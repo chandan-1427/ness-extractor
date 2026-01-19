@@ -23,6 +23,13 @@ interface Transaction {
   rawText: string;
 }
 
+interface ApiResponse {
+  success: boolean;
+  message?: string;
+  data: Transaction[];
+  nextCursor: string | null;
+}
+
 const Dashboard = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -31,13 +38,6 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filters, setFilters] = useState({ type: 'all', limit: '10' });
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({
-    from: undefined,
-    to: undefined,
-  });
   const [isLoading, setIsLoading] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [rawText, setRawText] = useState("");
@@ -67,19 +67,30 @@ const Dashboard = () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.message || 'Vault sync failed');
+      // Assign the interface to the JSON result
+      const result: ApiResponse = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Vault sync failed');
+      }
 
       setTransactions(prev => isLoadMore ? [...prev, ...result.data] : result.data);
       setNextCursor(result.nextCursor);
-    } catch (error: any) {
-      toast.error(error.message);
+
+    } catch (error) {
+      // In TS, 'error' in a catch block is 'unknown' by default
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('An unexpected error occurred during decryption.');
+      }
     } finally {
       setIsLoading(false);
       setIsFetchingMore(false);
     }
-  }, [token, filters, debouncedSearch]);
+  }, [token, filters, debouncedSearch, baseUrl]); 
 
+// Added baseUrl to dependencies if it's defined outside or in env
   // Re-fetch when filters OR debounced search changes
   useEffect(() => {
     fetchData(null, false);
