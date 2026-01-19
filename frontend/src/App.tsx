@@ -1,8 +1,9 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
 
 // Layouts & Pages
+import LoadingScreen from "./components/ui/LoadingScreen";
 import Navbar from "./layouts/Navbar";
 import Footer from "./layouts/Footer";
 import LandingPage from "./pages/LandingPage";
@@ -27,6 +28,20 @@ const ScrollToTop = () => {
  * Main App Component
  */
 export default function App() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate initial loading (or replace with actual auth checks)
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500); // 1.5 seconds feels snappy but deliberate
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
   return (
     <BrowserRouter>
       <ScrollToTop />

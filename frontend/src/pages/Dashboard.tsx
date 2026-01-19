@@ -42,7 +42,7 @@ const Dashboard = () => {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [rawText, setRawText] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
-
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
   const token = localStorage.getItem('accessToken');
 
   // --- SEARCH DEBOUNCING LOGIC ---
@@ -63,7 +63,7 @@ const Dashboard = () => {
       if (debouncedSearch) queryParams.append('search', debouncedSearch);
       queryParams.append('limit', filters.limit);
 
-      const response = await fetch(`http://localhost:5000/secure/statements/fetch?${queryParams}`, {
+      const response = await fetch(`${baseUrl}/secure/statements/fetch?${queryParams}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -89,7 +89,7 @@ const Dashboard = () => {
     if (!rawText.trim()) return toast.error("Input required");
     setIsExtracting(true);
 
-    const promise = fetch('http://localhost:5000/secure/statements/extract', {
+    const promise = fetch(`${baseUrl}/secure/statements/extract`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ text: rawText }),

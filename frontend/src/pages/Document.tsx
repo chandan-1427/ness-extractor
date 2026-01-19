@@ -9,7 +9,7 @@ import {
 
 const DocsPage = () => {
   return (
-    <div className="bg-[#050505] text-[#ADADAD] min-h-screen font-sans selection:bg-white selection:text-black">
+    <div className="bg-[#050505] text-[#ADADAD] min-h-screen font-sans selection:bg-white selection:text-black pt-20">
 
       {/* MAIN CONTENT */}
       <main className="lg:ml-64 p-6 md:p-12 lg:p-20 max-w-5xl">

@@ -21,7 +21,7 @@ type LoginValues = z.infer<typeof loginSchema>;
 const LoginPage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'; 
   const {
     register,
     handleSubmit,
@@ -36,7 +36,7 @@ const LoginPage = () => {
     // This promise handles the full authentication handshake
     const authSequence = async () => {
       // 1. Authenticate Credentials
-      const loginRes = await fetch('http://localhost:5000/auth/login', {
+      const loginRes = await fetch(`${baseUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -50,7 +50,7 @@ const LoginPage = () => {
       localStorage.setItem('accessToken', loginData.accessToken);
 
       // 3. Verify Identity & Fetch Profile
-      const profileRes = await fetch('http://localhost:5000/secure/me', {
+      const profileRes = await fetch(`${baseUrl}/secure/me`, {
         method: 'GET',
         headers: { 
           'Authorization': `Bearer ${loginData.accessToken}` 

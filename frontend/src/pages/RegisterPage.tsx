@@ -22,7 +22,7 @@ type RegisterValues = z.infer<typeof registerSchema>;
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
   const {
     register,
     handleSubmit,
@@ -35,7 +35,7 @@ const RegisterPage = () => {
     setIsLoading(true);
     
     // Using Sonner's promise API for a high-end "loading" feel
-    const registrationPromise = fetch('http://localhost:5000/auth/register', {
+    const registrationPromise = fetch(`${baseUrl}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
