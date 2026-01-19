@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { 
-  History, Terminal, 
+  History, Terminal, Search,
   Zap, Loader2, RefreshCw, Filter, ChevronDown 
 } from 'lucide-react';
 import { toast } from "sonner";
@@ -42,6 +42,7 @@ const Dashboard = () => {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [rawText, setRawText] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
+
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
   const token = localStorage.getItem('accessToken');
 
@@ -67,7 +68,6 @@ const Dashboard = () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      // Assign the interface to the JSON result
       const result: ApiResponse = await response.json();
 
       if (!response.ok) {
@@ -78,7 +78,6 @@ const Dashboard = () => {
       setNextCursor(result.nextCursor);
 
     } catch (error) {
-      // In TS, 'error' in a catch block is 'unknown' by default
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
@@ -90,7 +89,6 @@ const Dashboard = () => {
     }
   }, [token, filters, debouncedSearch, baseUrl]); 
 
-// Added baseUrl to dependencies if it's defined outside or in env
   // Re-fetch when filters OR debounced search changes
   useEffect(() => {
     fetchData(null, false);
@@ -130,12 +128,23 @@ const Dashboard = () => {
             <p className="text-[#9CA3AF] text-xs font-mono">Status: Connected | Encryption: AES-256</p>
           </header>
           
-          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            {/* --- INTEGRATED SEARCH BAR --- */}
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 group-focus-within:text-white transition-colors" />
+              <input 
+                type="text"
+                placeholder="SEARCH_LEDGER..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-[#181818] border border-white/10 rounded-md py-2 pl-9 pr-4 text-xs font-mono text-white focus:outline-none focus:ring-1 focus:ring-white/20 w-full sm:w-[220px] transition-all"
+              />
+            </div>
 
             <div className="flex gap-2">
               <Select value={filters.type} onValueChange={(v) => setFilters(f => ({...f, type: v}))}>
-                <SelectTrigger className="w-[140px] bg-[#181818] border-white/10 text-xs">
-                  <Filter className="w-3 h-3 mr-2" />
+                <SelectTrigger className="w-[140px] bg-[#181818] border-white/10 text-xs font-mono uppercase">
+                  <Filter className="w-3 h-3 mr-2 text-zinc-500" />
                   <SelectValue placeholder="All Types" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#181818] border-white/10 text-white">
@@ -144,8 +153,9 @@ const Dashboard = () => {
                   <SelectItem value="credit">Credits</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="icon" onClick={() => fetchData(null, false)} className="border-white/10 bg-[#181818]">
-                <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+              
+              <Button variant="outline" size="icon" onClick={() => fetchData(null, false)} className="border-white/10 bg-[#181818] hover:bg-white/5 transition-colors">
+                <RefreshCw size={16} className={isLoading ? "animate-spin text-white" : "text-zinc-400"} />
               </Button>
             </div>
           </div>
@@ -153,119 +163,128 @@ const Dashboard = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* --- TERMINAL INGEST --- */}
-          <Card className="bg-[#181818] border-white/5 text-white h-fit">
-            <CardHeader><CardTitle className="text-md flex items-center gap-2 font-mono"><Terminal size={16}/> STDIN</CardTitle></CardHeader>
+          <Card className="bg-[#181818] border-white/5 text-white h-fit shadow-2xl">
+            <CardHeader>
+              <CardTitle className="text-md flex items-center gap-2 font-mono">
+                <Terminal size={16} className="text-green-500"/> STDIN_RAW
+              </CardTitle>
+            </CardHeader>
             <CardContent className="space-y-4">
               <textarea 
                 value={rawText}
                 onChange={(e) => setRawText(e.target.value)}
-                className="w-full h-48 bg-[#0F0F0F] border border-white/5 rounded p-3 text-xs font-mono text-green-500/80 focus:border-white/20 outline-none resize-none"
-                placeholder="READY FOR INPUT..."
+                className="w-full h-48 bg-[#0F0F0F] border border-white/5 rounded p-3 text-xs font-mono text-green-500/80 focus:border-white/20 outline-none resize-none placeholder:text-zinc-800"
+                placeholder="PASTE RAW STATEMENT FRAGMENT HERE..."
               />
-              <Button onClick={handleExtraction} disabled={isExtracting} className="w-full bg-white text-black hover:bg-zinc-200 font-bold">
+              <Button onClick={handleExtraction} disabled={isExtracting} className="w-full bg-white text-black hover:bg-zinc-200 font-bold transition-all active:scale-[0.98]">
                 {isExtracting ? <Loader2 className="animate-spin mr-2"/> : <Zap className="mr-2" size={16}/>}
                 PARSE_STRING
               </Button>
             </CardContent>
           </Card>
 
-{/* --- SECURE LEDGER TABLE --- */}
-<Card className="lg:col-span-2 bg-[#181818] border-white/5 text-white">
-  <CardHeader className="pb-0">
-    <CardTitle className="text-md font-mono flex items-center gap-2">
-      <History size={16} className="text-zinc-500" /> TRANSACTION_LEDGER
-    </CardTitle>
-  </CardHeader>
-  <CardContent className="p-0">
-    <ScrollArea className="h-[550px] px-6">
-      <Table>
-        <TableHeader>
-          <TableRow className="border-white/5 hover:bg-transparent">
-            <TableHead className="text-[10px] font-bold uppercase text-zinc-500">Execution Date</TableHead>
-            <TableHead className="text-[10px] font-bold uppercase text-zinc-500">Transaction Details</TableHead>
-            <TableHead className="text-[10px] font-bold uppercase text-zinc-500">Amount</TableHead>
-            <TableHead className="text-[10px] font-bold uppercase text-zinc-500 text-right">Available Balance</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {transactions.length === 0 && !isLoading ? (
-            <TableRow>
-              <TableCell colSpan={4} className="text-center py-24 text-zinc-700 font-mono text-xs">
-                NO TRANSACTIONS DETECTED IN THIS VAULT
-              </TableCell>
-            </TableRow>
-          ) : (
-            transactions.map((tx) => (
-              <TableRow key={tx._id} className="border-white/5 hover:bg-white/[0.02] group transition-colors">
-                {/* 1. Execution Date */}
-                <TableCell className="py-4">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-medium text-white">
-                      {new Date(tx.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </span>
-                    <span className="text-[10px] text-zinc-500 font-mono">
-                      {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                </TableCell>
+          {/* --- SECURE LEDGER TABLE --- */}
+          <Card className="lg:col-span-2 bg-[#181818] border-white/5 text-white shadow-2xl overflow-hidden">
+            <CardHeader className="pb-0 border-b border-white/5 bg-white/[0.01] px-6 py-4">
+              <CardTitle className="text-md font-mono flex items-center gap-2">
+                <History size={16} className="text-zinc-500" /> TRANSACTION_LEDGER
+                {debouncedSearch && <Badge variant="outline" className="ml-2 font-mono text-[9px] border-white/10 text-zinc-400 uppercase">Filtered by: {debouncedSearch}</Badge>}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ScrollArea className="h-[600px]">
+                <Table>
+                  <TableHeader className="bg-[#1a1a1a] sticky top-0 z-10 shadow-sm">
+                    <TableRow className="border-white/5 hover:bg-transparent">
+                      <TableHead className="text-[10px] font-bold uppercase text-zinc-500 pl-6">Execution Date</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase text-zinc-500">Details & Type</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase text-zinc-500">Amount</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase text-zinc-500 text-right pr-6">Vault Balance</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {transactions.length === 0 && !isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-32 text-zinc-700 font-mono text-xs">
+                          NO_DATA_STREAM_FOUND
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      transactions.map((tx) => (
+                        <TableRow key={tx._id} className="border-white/5 hover:bg-white/[0.03] group transition-colors">
+                          <TableCell className="py-4 pl-6">
+                            <div className="flex flex-col">
+                              <span className="text-xs font-medium text-white font-mono">
+                                {new Date(tx.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </span>
+                              <span className="text-[10px] text-zinc-500 font-mono opacity-50">
+                                {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                              </span>
+                            </div>
+                          </TableCell>
 
-                {/* 2. Transaction Type Badge */}
-                <TableCell>
-                  <Badge 
-                    className={`bg-zinc-900 border-white/5 text-[9px] font-mono px-2 py-0.5 uppercase tracking-tighter ${
-                      tx.type === 'debit' ? 'text-red-400 border-red-900/50' : 'text-green-400 border-green-900/50'
-                    }`}
-                  >
-                    {tx.type}
-                  </Badge>
-                </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col gap-1.5">
+                              <span className="text-[11px] text-zinc-300 font-mono tracking-tight line-clamp-1 group-hover:text-white transition-colors">
+                                {tx.description || "NULL_DESC_PTR"}
+                              </span>
+                              <Badge 
+                                className={`w-fit bg-transparent border-white/10 text-[8px] font-mono px-1.5 py-0 uppercase tracking-widest ${
+                                  tx.type === 'debit' ? 'text-red-400/80' : 'text-green-400/80'
+                                }`}
+                              >
+                                {tx.type}
+                              </Badge>
+                            </div>
+                          </TableCell>
 
-                {/* 3. Dynamic Amount Formatting */}
-                <TableCell>
-                  <span className={`font-mono text-sm font-bold ${tx.type === 'debit' ? 'text-red-500' : 'text-green-500'}`}>
-                    {tx.type === 'debit' ? '-' : '+'}
-                    {tx.amount.toLocaleString('en-IN', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })}
-                  </span >
-                  <span className="ml-1 text-[10px] text-zinc-500 font-mono">{tx.currency}</span>
-                </TableCell>
+                          <TableCell>
+                            <span className={`font-mono text-sm font-bold ${tx.type === 'debit' ? 'text-red-500' : 'text-green-400'}`}>
+                              {tx.type === 'debit' ? '-' : '+'}
+                              {tx.amount.toLocaleString('en-IN', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                              })}
+                            </span>
+                            <span className="ml-1 text-[9px] text-zinc-600 font-mono uppercase">{tx.currency}</span>
+                          </TableCell>
 
-                {/* 4. Available Balance After Transaction */}
-                <TableCell className="text-right">
-                  <span className="text-xs font-mono text-zinc-300">
-                    {tx.balance ? tx.balance.toLocaleString('en-IN', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    }) : '---'}
-                  </span>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-      
-      {/* Pagination stays below */}
-      <div className="py-6 flex justify-center border-t border-white/5 mt-4">
-        {nextCursor ? (
-          <Button 
-            variant="ghost" 
-            onClick={() => fetchData(nextCursor, true)} 
-            disabled={isFetchingMore}
-            className="text-[10px] font-mono text-zinc-500 hover:text-white"
-          >
-            {isFetchingMore ? <Loader2 className="animate-spin mr-2" size={14}/> : <ChevronDown className="mr-2" size={14}/>}
-            LOAD_NEXT_SEQUENCE
-          </Button>
-        ) : !isLoading && transactions.length > 0 && (
-          <p className="text-[10px] font-mono text-zinc-600">-- SECURE END OF STREAM --</p>
-        )}
-      </div>
-    </ScrollArea>
-  </CardContent>
-</Card>
+                          <TableCell className="text-right pr-6">
+                            <span className="text-xs font-mono text-zinc-400 bg-white/5 px-2 py-1 rounded border border-white/5">
+                              {tx.balance ? tx.balance.toLocaleString('en-IN', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                              }) : '0.00'}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+                
+                {/* Pagination */}
+                <div className="py-8 flex justify-center bg-gradient-to-t from-[#181818] to-transparent">
+                  {nextCursor ? (
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => fetchData(nextCursor, true)} 
+                      disabled={isFetchingMore}
+                      className="text-[10px] font-mono text-zinc-500 hover:text-white border border-white/5 hover:bg-white/5"
+                    >
+                      {isFetchingMore ? <Loader2 className="animate-spin mr-2" size={14}/> : <ChevronDown className="mr-2" size={14}/>}
+                      LOAD_NEXT_SEQUENCE
+                    </Button>
+                  ) : !isLoading && transactions.length > 0 && (
+                    <div className="flex flex-col items-center gap-1 opacity-30">
+                      <div className="h-[1px] w-12 bg-zinc-500" />
+                      <p className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">End of stream</p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
